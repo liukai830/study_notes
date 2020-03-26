@@ -123,7 +123,7 @@ spring:
 
 ​	登录locathost:7001查看：可以看到提供者`CLOUD-PAYMENT-SERVICE`和消费者`CLOUD-ORDER-SERVICE`两个微服务已经注册进注册中心
 
-![image-20200308181442071](..\typora-user-images\image-20200308181442071.png)
+![image-20200308181442071](..\..\typora-user-images\image-20200308181442071.png)
 
 
 
@@ -165,7 +165,7 @@ eureka:
 
 ​	登录 http://eureka7001.com:7001/ 和 http://eureka7002.com:7002/ 能在注册列表中看到其他的server节点即为配置集群成功。
 
-![image-20200308192710509](..\typora-user-images\image-20200308192710509.png)
+![image-20200308192710509](..\..\typora-user-images\image-20200308192710509.png)
 
 ### 3-3、将支付服务8001和订单服务80发布到Eureka集群中
 
@@ -185,9 +185,9 @@ eureka:
 
 ​	登录 http://eureka7001.com:7001/ 和 http://eureka7002.com:7002/ 都可以看到payment和order两个微服务即为成功。
 
-![image-20200308194246791](..\typora-user-images\image-20200308194246791.png)
+![image-20200308194246791](..\..\typora-user-images\image-20200308194246791.png)
 
-![image-20200308194341039](..\typora-user-images\image-20200308194341039.png)
+![image-20200308194341039](..\..\typora-user-images\image-20200308194341039.png)
 
 ### 3-4、支付服务提供者8001集群环境构建
 
@@ -195,7 +195,7 @@ eureka:
 
 ​	可以看到在微服务**CLOUD-PAYMENT-SERVICE**下有**8001**和**8002**两个节点，只对外暴露一个微服务名称。
 
-![image-20200308202502006](..\typora-user-images\image-20200308202502006.png)
+![image-20200308202502006](..\..\typora-user-images\image-20200308202502006.png)
 
 ### 3-3、负载均衡
 
@@ -210,7 +210,7 @@ public static final String PAYMENT_URL = "http://CLOUD-PAYMENT-SERVICE";
 
 ​	**发现有报错：**<font color="red">同一个微服务下有多个节点，程序不能通过微服务名知道到底是哪一个微服务进行服务提供</font>
 
-![image-20200308203122056](..\typora-user-images\image-20200308203122056.png)
+![image-20200308203122056](..\..\typora-user-images\image-20200308203122056.png)
 ​	
 
 #### 3.3.2 解决问题
@@ -240,7 +240,7 @@ eureka:
   instance:
     instance-id: payment8001
 ```
-![image-20200308205531955](..\typora-user-images\image-20200308205531955.png)
+![image-20200308205531955](..\..\typora-user-images\image-20200308205531955.png)
 
 ​	**（2）鼠标悬停在微服务上显示IP信息**
 
@@ -249,7 +249,7 @@ eureka:
   instance:
     prefer-ip-address: true
 ```
-![image-20200308210146920](..\typora-user-images\image-20200308210146920.png)
+![image-20200308210146920](..\..\typora-user-images\image-20200308210146920.png)
 
 
 
@@ -289,7 +289,7 @@ public R discovery() {
 ```
 ​	查看日志输出：
 
-![image-20200308212700475](..\typora-user-images\image-20200308212700475.png)
+![image-20200308212700475](..\..\typora-user-images\image-20200308212700475.png)
 
 
 
