@@ -371,6 +371,147 @@ Vue.component('my-cpn', {
 
 ### 6.2、子传父
 
+- 字传父通过**自定义事件**来完成
+  - 在子组件中通过this.$emit('event_name', param_1, param_2...)来触发事件
+  - 在父组件中通过v-on: event_name(param_1, param_2)="cpnClick"来监听事件
+  - 最后在父组件的Vue实例methods中的cpnClick()接受参数
+
+具体实现代码如下：
+
+```html
+<html>
+	<body>
+		<div id="app">
+      <!-- 3. 在父组件里通过emit定义的事件名，监听该事件-->
+			<cpn :childcatagories="catagories" @itemclick="cpnItemClick"></cpn>
+		</div>
+	</body>
+	<script src="../js/vue.js"></script>
+	<template id="categorycpn">
+		<div>
+      <!-- 1.子组件监听click事件-->
+			<button v-for="item in childcatagories" 
+              @click="itemClick(item)">
+        {{item.name}}
+      </button>
+		</div>
+	</template>
+
+	<script>
+		const cpn = {
+			template: '#categorycpn',
+			props: {
+				childcatagories: Array
+			},
+			methods: {
+				itemClick(item) {
+          // 2. 在子组件的click事件中，通过$emit向父组件发射事件，并且可以带参数
+					this.$emit('itemclick',item)
+				}
+			}
+		}
+		
+		const app = new Vue({
+			el: '#app',
+			data: {
+				catagories: [
+					{id: 1, name: '热销产品'},
+					{id: 2, name: '手机数码'},
+					{id: 3, name: '家用电器'}
+				]
+			},
+			components: {
+				cpn
+			},
+			methods: {
+        // 4. 最后在父组件的methods中可以处理事件和接受参数
+				cpnItemClick(item) {
+					console.log(item)
+				}
+			}
+		})
+	</script>
+</html>
+```
+
+
+
+### 6.3、父子组件双向绑定案例
+
+需求：
+
+（1）父组件中的值在子组件中显示
+
+（2）子组件中input改变这个值
+
+（3）父组件的值也要改变
+
+注意事项：
+
+- 在子组件通过props用number获取父组件的num值，但是不能用v-modal绑定这个number;
+- 要在子组件用data()或者计算属性用一个新的值dnumber去接收number，再实现v-modal绑定;
+- 至此，实现的是子组件与子组件中的dnumber绑定，还需要绑定到父组件data中的num
+- 通过子传父#emit即可，这里是用了watch监听子组件值的改变
+- 完整路径如下：num->number->dnumber:->input->双向绑定dnumber-> (watch,$emit)num->number
+
+实现代码如下：
+
+```html
+<html>
+	<body>
+		<div id="app">
+      <h2>父组件num{{num}}</h2>
+      <!-- 4. 在父组件中监听子组件值的改变 -->
+			<cpn :number="num" @numberchange="numchange"></cpn>
+		</div>
+	</body>
+	<template id='childtemplate'>
+		<div>
+			<h2>父组件传过来的值：{{number}}</h2>
+			<h2>子组件重新绑定的值：{{dnumber}}</h2>
+      <!-- 1. 原则上不能直接修改父组件的值，所以不能直接绑定number-->
+			<input type="number" v-model.number="dnumber">
+		</div>
+	</template>
+	<script src="../js/vue.js"></script>
+	<script>
+		const cpn = {
+			template: '#childtemplate',
+			props: {
+				number: Number
+			},
+      // 2. 需要通过data或者计算属性引用父组件的值number，然后绑定新的值dnumber
+			data() {
+				return {
+					dnumber: this.number
+				}
+			},
+      // 3. 通过watch监听值的改变，用$emit向父组件返回改变后的值
+			watch:{
+				dnumber(newValue,oldValue) {
+					this.$emit('numberchange',newValue);
+				}
+			}
+		}
+		const app = new Vue({
+			el: '#app',
+			data: {
+				num: 1
+			},
+			components:{
+				cpn
+			},
+			methods:{
+        // 5. 重新改变父组件data值
+				numchange(newValue) {
+					this.num = newValue
+				}
+			}
+		})
+	</script>
+</html>
+```
+
 
 
 
