@@ -512,21 +512,237 @@ Vue.component('my-cpn', {
 </html>
 ```
 
+### 6.4、父子组件的访问方式
 
+- 有时候我们需要父组件直接访问子组件、子组件直接访问父组件、子组件直接访问根组件
+  - 父组件访问子组件：使用$children或$refs
+    - $children是一个数组类型，包含了所有子组件对象，使用较少
+    - $refs获取较多
+  - 子组件访问父组件：使用$parent
+  - 访问根组件：$root
+
+具体实现代码如下：
+
+```html
+<html>
+	<body>
+		<div id="app">
+			<h2>父组件</h2>
+			<button @click="showchildmsg">点击调用子组件showMsg</button>
+			<cpn ref="aaa"></cpn>
+			<cpn ref="bbb"></cpn>
+		</div>
+	</body>
+	<template id="cpn">
+		<div>
+			<h2>这是子组件</h2>
+			<button type="button" @click="showMsg">子组件按钮，点击打印</button>
+		</div>
+	</template>
+	<script src="../js/vue.js"></script>
+	<script>
+		const cpn = {
+			template: '#cpn',
+			methods: {
+				showMsg() {
+					console.log("子组件...")
+					// 访问父组件
+					console.log(this.$parent)
+          // 访问根组件
+          console.log(this.$root)
+				}
+			}
+		}
+		const app = new Vue({
+			el: '#app',
+			components: {
+				cpn
+			},
+			methods: {
+				showchildmsg() {
+					// 1. $children，实际开发中使用较少
+					// this.$children[0].showMsg()
+					// this.$children.forEach(child=>console.log(child.$attrs.id))
+					// 2. $refs 在组件上加ref="aaa"属性，就可以通过this.$refs.aaa获取子组件
+					console.log(this.$refs.aaa)
+				}
+			}
+		})
+	</script>
+</html>
+```
 
 
 
 ## 七、插槽
 
+### 7.1 基本使用
+
+- 插槽是为了让组件开发更具有扩展性，为父组件预留的空间
+  （1）插槽的基本使用`<slot></slot>`
+
+  （2）插槽设置默认值`<slot><p>这是插槽默认值</p></slot>`
+
+  （3）同时有多个标签时，会同时把这些标签全部汰替换到插槽中
+
+
+```html
+<html>
+	<body>
+		<div id="app">
+			<cpn><button>d</button></cpn>
+			<cpn><input type="text"></cpn>
+			<cpn></cpn>
+			<!--同时有多个标签时，会同时把这些标签全部汰替换到插槽中-->
+			<cpn>
+				<h2>qqqqq</h2>
+				<h3>22222</h3>
+				<button>aaq</button>
+			</cpn>
+		</div>
+	</body>
+	<template id="cpn">
+		<div>
+			<h2>这是子组件</h2>
+			<!-- 插槽，预留的空间 -->
+			<!-- <slot></slot> -->
+			<!-- 插槽设置默认值-->
+			<slot><p>这是插槽默认值</p></slot>
+			<hr/>
+		</div>
+	</template>
+	<script src="../js/vue.js"></script>
+	<script>
+		const cpn = {
+			template: '#cpn',
+		}
+		const app = new Vue({
+			el: '#app',
+			components: {
+				cpn
+			}
+		})
+	</script>
+</html>
+```
+
+
+
+### 7.2 具名插槽
+
+​	作用：用于区分多个插槽
+
+- 在slot标签上，用name进行区分每个插槽
+
+- 使用时候，增加标签属性slot="name"即可替换对应的插槽
+
+具体代码如下：
+
+```html
+<html>
+	<body>
+		<div id="app">
+      <!-- 2. 使用slot="xxx"替换对应的插槽 -->
+			<cpn><span slot="left">www</span></cpn>
+			<cpn><span slot="left">左左左</span><button slot="right">右右右</button></cpn>
+		</div>
+	</body>
+	<template id="cpn">
+		<div>
+			<h2>这是子组件</h2>
+      <!-- 1. 定义三个插槽，name不同 -->
+			<slot name="left">左边</slot>
+			<slot name="middle">中间</slot>
+			<slot name="right">右边</slot>
+			<hr/>
+		</div>
+	</template>
+	<script src="../js/vue.js"></script>
+	<script>
+		const cpn = {
+			template: '#cpn',
+		}
+		const app = new Vue({
+			el: '#app',
+			components: {
+				cpn
+			}
+		})
+	</script>
+</html>
+```
+
+
+
+### 7.3 作用域插槽
+
+- 目的：父组件替换插槽的标签，但是内容由子组件来提供。
+
+
+
+- 假设有个需求
+  - 子组件中包含一组数据，比如：languages: ['JAVA', 'Python', 'C#', 'Go', 'C++']
+  - 需要在多个界面展示：
+    - 某些界面是水平方向一一展示的；
+    - 某些界面是以列表的方式展示的；
+    - 某些界面是直接展示一个数组；
+  - 内容在子组件，希望父组件告诉子组件如何展示就可以了
+    
+    - 利用**slot作用域插槽**就可以了
+    
 
 
 
 
+-  实现代码如下：
+
+```html
+<html>
+	<body>
+		<div id="app">
+			<cpn></cpn>
+			<cpn>
+				<!-- 2. 要定义一个template模板，并且属性v-slot="xxx" -->
+				<template v-slot="slot">
+					<!-- 3. 这样就能用xxx.data 获取到子组件插槽的数据了-->
+					<span v-for="item in slot.data"> {{item}}、 </span>
+				</template>
+			</cpn>
+			<cpn></cpn>
+		</div>
+	</body>
+	<template id="cpntemplate">
+		<div>
+			<!-- 1. 在slot使用:data="languages"获取数据，这里的:data可以随便取值 -->
+			<slot :data="languages">
+				<ul>
+					<li v-for="item in languages">{{item}}</li>
+				</ul>
+			</slot>
+		</div>
+	</template>
+	<script src="../js/vue.js"></script>
+	<script>
+		const cpn = {
+			template: '#cpntemplate',
+			data() {
+				return {
+					languages: ['JAVA', 'Python', 'C#', 'Go', 'C++']
+				}
+			}
+		}
+		const app = new Vue({
+			el: '#app',
+			components: {
+				cpn
+			}
+		})
+	</script>
+</html>
+```
 
 
 
+- 效果如图所示：
 
-
-
-
-
+  ![image-20200401221508129](../../typora-user-images/image-20200401221508129.png)
