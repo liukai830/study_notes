@@ -746,3 +746,36 @@ Vue.component('my-cpn', {
 - 效果如图所示：
 
   ![image-20200401221508129](../../typora-user-images/image-20200401221508129.png)
+
+
+
+## 八、动态组件
+
+```html
+<html>
+	<body>
+		<div id="app">
+			<components :is='type'></components>
+		</div>
+	</body>
+	<script src="../js/vue.js"></script>
+	<script>
+		const cpn1 = {
+			template: `<div><h2>组件1</h2></div>`,
+		}
+		const cpn2 = {
+			template: `<div><h2>组件2</h2></div>`,
+		}
+		const app = new Vue({
+			el: '#app',
+			components: {
+				cpn1,cpn2
+			},
+			data: {
+				type: 'cpn1'
+			}
+		})
+	</script>
+</html>
+```
+
