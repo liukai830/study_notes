@@ -761,15 +761,15 @@ Vue.component('my-cpn', {
 	<script src="../js/vue.js"></script>
 	<script>
 		const cpn1 = {
-			template: `<div><h2>组件1</h2></div>`,
+			template: `<div><h2>组件1</h2></div>`
 		}
 		const cpn2 = {
-			template: `<div><h2>组件2</h2></div>`,
+			template: `<div><h2>组件2</h2></div>`
 		}
 		const app = new Vue({
 			el: '#app',
 			components: {
-				cpn1,cpn2
+				cpn1, cpn2
 			},
 			data: {
 				type: 'cpn1'
