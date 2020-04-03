@@ -231,6 +231,9 @@ module.exports = {
 
 - 然后就能在main.js中写vue代码了
 
+  - 原则上我们不在index.html中写代码，只保留<div id="app"></div>
+  - template中 会替换上面这个标签
+  
   ```javascript
   import Vue from "vue"
   
@@ -341,42 +344,78 @@ module.exports = {
 
 ## 十、webpack-plugin的使用
 
-- 在编译的js文件title加入版权注释(自定义内容)
+​		下面的配置全部在`webpack.config.js` 文件中修改。
+
+### 10.1、添加版权
 
   ```javascript
   const webpack = require('webpack');
   
   plugins: [
-      new webpack.BannerPlugin('test')
+      new webpack.BannerPlugin('最终版权归liuk所有')
   ]
   ```
 
-  
+  最后会在打包后的bundle.js第一行增加注释： `/*！ 最终版权归liuk所有*/`
 
-- 把index.html打包进dist中
 
-   `npm install html-webpack-plugin --save-dev`
+
+### 10.2、打包html
+
+- HtmlWebpackPlugin插件可以为我们做这些事情：
+
+  - 自动生成一个index.html文件（可以指定模板来生成）
+  - 将打包的js文件，自动通过script标签插入到body中
+
+- 安装HtmlWebpackPlugin插件：
+
+  `npm install html-webpack-plugin --save-dev`
+
+- 修改`webpack.config.js` 中plugins部分内容
+
+  - 这里的template表示根据什么模板来生成index.html
+  - 另外需要删除之前在output中添加到public属性，否则插入的script标签的src可能会有问题
 
   ```javascript
   const HtmlWebpackPlugin = require('html-webpack-plugin');
-  new HtmlWebpackPlugin({
-      template: 'index.html'
-  })
+  const uglifyJsPlugin = require('uglifyjs-webpack-plugin')
+  module.exports = {
+    ...
+    plugins: [
+    new HtmlWebpackPlugin({
+    		template: 'index.html'
+  		})
+    ]
+  }
   ```
-
+  
   
 
-- 代码压缩
+###  10.3、js代码压缩
 
-    `npm install uglifyjs-webpack-plugin@1.1.1 --save-dev`   
+`npm install uglifyjs-webpack-plugin@1.1.1 --save-dev`   
+
+```javascript
+const uglifyJsPlugin = require('uglifyjs-webpack-plugin')
+module.exports = {
+  ...
+  plugins: [
+    new uglifyJsPlugin();
+  ]
+}
+```
 
 
 
-- 搭建本地服务器 -> 代码热更新
+### 10.4、搭建本地服务器
+
+作用：代码热更新。
+
+【1】下载插件
 
     `npm install webpack-dev-server@2.9.1 --save-dev`   
 
-  增加配置：
+【2】增加配置：
 
   ```javascript
   devServer: {
@@ -386,7 +425,7 @@ module.exports = {
   }
   ```
 
-  启动项目即可，启动方式：
+【3】启动项目即可，启动方式：
 
   （1）  `.\node_modules\.bin\webpack-dev-server`   
 
@@ -397,3 +436,63 @@ module.exports = {
   ```
 
   
+
+## 十一、webpack-配置文件的分离
+
+目的：区分开发时依赖和运行时依赖。
+
+【1】创建build文件夹
+
+【2】文件夹下创建`base.config.js`	->	 通用配置
+
+【3】文件夹下创建`dev.config.js`	  ->	 开发时配置
+
+【4】文件夹下创建`prod.config.js`    ->     运行时配置（如增加代码压缩plugin...）
+
+【5】根据不同场景，需要合并`base+dev`或者`base+prod`，
+
+​			所以需要安装另一个插件`npm install webpack-merge`
+
+【6】在`dev`和`prod`配置文件中，通过merge进行导出
+
+- 原来的dev配置：
+
+```javascript
+const uglifyJsPlugin = require('uglifyjs-webpack-plugin')
+module.exports = {
+  ...
+  plugins: [
+    new uglifyJsPlugin();
+  ]
+}
+```
+
+- 通过merge导出配置：
+
+```javascript
+const uglifyJsPlugin = require('uglifyjs-webpack-plugin')
+const webpackMerge = require('webpack-merge')
+const baseConfig = require('./base.config.js')
+
+module.exports = webpackMerge(
+	baseConfig,
+  {
+    ...
+  	plugins: [
+    	new uglifyJsPlugin();
+  	]
+  }
+)
+```
+
+【7】修改`package.json`中的script指令
+
+```json
+"scripts": {
+  "build": "webpack --config ./build/prod.config.js",
+  "dev": "webpack-dev-server --open --config ./builf/dev.config.js"
+}
+```
+
+【8】最后使用`npm run build`或者`npm run dev`即可区分正式环境和开发环境
+
