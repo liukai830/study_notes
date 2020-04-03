@@ -47,7 +47,6 @@ console.log(sub(1,2));
 在index.html引用main.js（引用的是最终编译后的文件）
 
 <script src="dist/bundle.js" type="text/javascript" charset="utf-8"></script>
-
 最近打包到dist中，由于main.js中引用了mathUtils.js，打包的时候会把mathUtils.js也打包进去
 
 `webpack ./src/main.js ./dist/bundle.js`
@@ -208,10 +207,193 @@ module.exports = {
 
 ## 八、webpack-vue配置
 
+- 全局安装vue
+
+    `npm install vue --save`   
+
+  - runtime-only：代码中不能有任何的template
+  - runtime-compiler：可以有template，因为compiler可以编译template
+
+  解决方案：在`webpack.config.js`中增加配置
+
+  ```javascript
+  resolve: {
+      alias: {
+          // 指定项目使用vue的版本
+          'vue$': 'vue/dist/vue.esm.js'
+      }
+  }
+  ```
+
+- 在main.js中引入vue
+
+    `import Vue from 'vue'`   
+
+- 然后就能在main.js中写vue代码了
+
+  ```javascript
+  import Vue from "vue"
+  
+  new Vue({
+  	el: '#app',
+  	template: `
+  	<div>
+  	  <span>{{name}}</span>
+  	  <button @click="btnClick">点我</button>
+  	  <span>{{msg}}</span>
+  	</div>
+  	`,
+  	data: {
+  		msg: 'hello,liuk!',
+  		name: 'liuk'
+  	},
+  	methods: {
+  		btnClick() {
+  			this.msg += ' click ';
+  		}
+  	}
+  });
+  ```
+
 
 
 ## 九、Vue的终极使用方案
 
+-   安装vue-loader：
+
+    `npm install vue-loader vue-templete-compiler --save-dev`   
+
+- 配置  `webpack.config.js`   
+
+  ```javascript
+  {
+      test: /\.vue$/,
+      loader: 'vue-loader'
+  }
+  ```
+
+    **重新build后发现报错**   
+
+    <font color="red">`vue-loader was used without the corrsponding plguin. Makr sure to include VueLoaderPlguin in your webpack config`</font>   
+
+    **解决方案：**   
+
+  ​	（1）安装插件
+
+  ​	（2）修改 `package.json`中vue-loader版本为14以下，并重新`npm install`   
+
+- 定义app.vue文件
+
+  ```html
+  <template>
+  	<div>
+  	  <span class="title">{{name}}</span>
+  	  <button @click="btnClick">点我</button>
+  	  <span>{{msg}}</span>
+  	  <cpn></cpn>
+  	  <cpn></cpn>
+  	</div>
+  </template>
+  
+  <script>
+  	import cpn from "./cpn.vue"
+  	export default {
+  		name: 'App',
+  		components: {
+  			cpn
+  		},
+  		data(){
+  			return {
+  				msg: 'hello,liuk',
+  				name: 'liuk'
+  			}
+  		},
+  		methods: {
+  			btnClick() {
+  				this.msg += ' click ';
+  			}
+  		}
+  	}
+  </script>
+  
+  <style>
+  	.title {
+  		color: green;
+  	}
+  </style>
+  ```
+
+- 在main.js引用此文件即可
+
+  ```javascript
+  import App from "./vue/app.vue"
+  
+  new Vue({
+  	el: '#app',
+  	template: '<App/>',
+  	components: {
+  		App
+  	}
+  });
+  ```
+
 
 
 ## 十、webpack-plugin的使用
+
+- 在编译的js文件title加入版权注释(自定义内容)
+
+  ```javascript
+  const webpack = require('webpack');
+  
+  plugins: [
+      new webpack.BannerPlugin('test')
+  ]
+  ```
+
+  
+
+- 把index.html打包进dist中
+
+   `npm install html-webpack-plugin --save-dev`
+
+  ```javascript
+  const HtmlWebpackPlugin = require('html-webpack-plugin');
+  new HtmlWebpackPlugin({
+      template: 'index.html'
+  })
+  ```
+
+  
+
+- 代码压缩
+
+    `npm install uglifyjs-webpack-plugin@1.1.1 --save-dev`   
+
+
+
+- 搭建本地服务器 -> 代码热更新
+
+    `npm install webpack-dev-server@2.9.1 --save-dev`   
+
+  增加配置：
+
+  ```javascript
+  devServer: {
+      contentBase: './dist', //监听的目录
+      inline: true,   //热更新
+      port: 8099  //端口，默认8080
+  }
+  ```
+
+  启动项目即可，启动方式：
+
+  （1）  `.\node_modules\.bin\webpack-dev-server`   
+
+  （2）  在script中增加脚本 `--open`表示自动打开浏览器   
+
+  ```javascript
+  "dev": "webpack-dev-server --open"
+  ```
+
+  
