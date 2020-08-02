@@ -745,7 +745,7 @@ Vue.component('my-cpn', {
 
 - 效果如图所示：
 
-  ![image-20200401221508129](../../typora-user-images/image-20200401221508129.png)
+  ![image-20200401221508129](https://gitee.com/liukai830/picgo/raw/master/image-20200401221508129.png)
 
 
 

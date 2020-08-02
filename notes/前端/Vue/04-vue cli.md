@@ -18,7 +18,7 @@
 
 ### 2.1 初始化项目过程
 
-![image-20200404154737645](../../typora-user-images/image-20200404154737645.png)
+![image-20200404154737645](https://gitee.com/liukai830/picgo/raw/master/image-20200404154737645.png)
 
 ### 2.2 目录结构
 

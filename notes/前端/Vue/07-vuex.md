@@ -8,7 +8,7 @@
 
 > Vuex状态图例：
 
-![image-20200406163646404](../../typora-user-images/image-20200406163646404.png)
+![image-20200406163646404](https://gitee.com/liukai830/picgo/raw/master/image-20200406163646404.png)
 
 
 

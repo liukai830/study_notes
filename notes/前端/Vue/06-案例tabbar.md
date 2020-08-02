@@ -1,6 +1,6 @@
 ## 零、TabBar案例效果
 
-![image-20200405234313438](../../typora-user-images/image-20200405234313438.png)
+![image-20200405234313438](https://gitee.com/liukai830/picgo/raw/master/image-20200405234313438.png)
 
 ## 一、TabBar实现思路
 
