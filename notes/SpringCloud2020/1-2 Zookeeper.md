@@ -1,6 +1,4 @@
-
-
-# 一、安装
+### 一、安装
 
 ```shell
 cd /usr/local
@@ -57,6 +55,8 @@ systemctl is-enabled zookeeper.service
 systemctl disable zookeeper.service
 ```
 
-# 二、注册中心Zookeeper
+
+
+### 二、注册中心Zookeeper
 
 zookeeper是一个分布式协调工具，可以实现注册中心功能

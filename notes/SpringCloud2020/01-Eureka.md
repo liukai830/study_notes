@@ -1,16 +1,16 @@
-# 一、eureka基础知识
+## 一、eureka基础知识
 
-<font color="blue">1. 什么是服务治理</font>
+#### 1.1 什么是服务治理
 
-​	传统的rpc调用框架中，管理每个服务之间的依赖关系比较复杂，所以需要<font color="blue">服务治理</font>，来管理这些依赖关系，可以实现服务调用、负载均衡、容错等，实现服务注册与发现
+​	传统的rpc调用框架中，管理每个服务之间的依赖关系比较复杂，所以需要<font color="blue">服务治理</font>，来管理这些依赖关系，可以实现服务调用负载均衡容错等，实现服务注册与发现
 
-<font color="blue">2. 什么是服务注册与发现</font>
+#### 1.2 什么是服务注册与发现
 
 ​	Eureka Server作为服务注册功能的服务器，它是服务注册中心。而系统中的其他微服务，使用Eureka的客户端连接到Eureka Server并维持心跳连接。
 
 ​	在服务注册与发现中，有一个注册中心。在服务器启动时，会把自己当前服务器的信息（如通讯地址等）以<font color="blue">别名</font>的方式注册到注册中心上。另一方（消费者|服务提供者），以该别名的方式去注册中心上<font color="blue">获取实际的服务通讯地址</font>，然后再进行远程调用。
 
-<font color="blue">3. Eureka两个组件</font>
+#### 1.3 Eureka两个组件
 
 - <font color="red">Eureka Server：</font>提供服务注册服务
 
@@ -18,13 +18,14 @@
 
 - <font color="red">Eureka Client：</font>通过注册中心进行访问
 
-  ​	是一个Java客户端，用于简化Eureka Server的交互，客户端同时也具备一个内置的、使用轮询的(round-robin）负载均衡算法的负载均衡器。在应用启动后，将会向Eureka Server发送心跳（<font color="blue">默认周期30秒</font>）。在多个周期内没有收到某个节点的心跳，会把这个节点从服务列表中移除（<font color="blue">默认90秒</font>）
+  ​	是一个Java客户端，用于简化Eureka Server的交互，客户端同时也具备一个内置的 使用轮询的(round-robin）负载均衡算法的负载均衡器。在应用启动后，将会向Eureka Server发送心跳（<font color="blue">默认周期30秒</font>）。在多个周期内没有收到某个节点的心跳，会把这个节点从服务列表中移除（<font color="blue">默认90秒</font>）
 
 
 
-# 二、单机Eureka构建
+## 二、单机Eureka构建
 
-### 2-1、创建Eureka Server端服务注册中心
+### 2.1 创建Eureka Server端服务注册中心
+
 ​	(1）创建注册中心module: <font color="red" size="5">`cloud-eureka-server7001`</font>
 ​	(2）pom.xml中引入eureka-server
 
@@ -63,8 +64,13 @@ public class EurekaMain7001 {
 }
 ```
 
+（5）启动后访问http://localhost:7001即可看到eureka服务启动成功。
 
-### 2-2、提供者payment8001注册进注册中心
+![image-20200804213010538](https://gitee.com/liukai830/picgo/raw/master/image-20200804213010538.png)
+
+
+
+### 2.2 提供者payment8001注册进注册中心
 
 ​	(1）pom.xml引入Eureka-client
 
@@ -107,7 +113,7 @@ public class PaymentMain8001 {
 
 
 
-### 2-3、消费者consume-order80注册进注册中心
+### 2.3 消费者consume-order80注册进注册中心
 
 ​	操作同上，微服务名为：
 
@@ -119,21 +125,21 @@ spring:
 
 
 
-### 2-4、查看微服务注册情况
+### 2.4 查看微服务注册情况
 
-​	登录locathost:7001查看：可以看到提供者`CLOUD-PAYMENT-SERVICE`和消费者`CLOUD-ORDER-SERVICE`两个微服务已经注册进注册中心
+​	登录http://locathost:7001查看：可以看到提供者`CLOUD-PAYMENT-SERVICE`和消费者`CLOUD-ORDER-SERVICE`两个微服务已经注册进注册中心
 
-![image-20200308181442071](..\..\typora-user-images\image-20200308181442071.png)
+![image-20200308181442071](https://gitee.com/liukai830/picgo/raw/master/image-20200308181442071.png)
 
 
 
-# 三、集群Eureka构建
+##  三、集群Eureka构建
 
-### 3-1、Eureka集群原理说明
+### 3.1 Eureka集群原理说明
 
 ​	互相注册，相互守望：集群中的任意一个client节点，会注册其他所有client节点
 
-### 3-2、Eureka Server集群构建
+### 3.2 Eureka Server集群构建
 
 ​	(1）修改host文件（C:\Windows\System32\drivers\etc），增加域名映射
 
@@ -165,9 +171,9 @@ eureka:
 
 ​	登录 http://eureka7001.com:7001/ 和 http://eureka7002.com:7002/ 能在注册列表中看到其他的server节点即为配置集群成功。
 
-![image-20200308192710509](..\..\typora-user-images\image-20200308192710509.png)
+![image-20200308192710509](https://gitee.com/liukai830/picgo/raw/master/image-20200308192710509.png)
 
-### 3-3、将支付服务8001和订单服务80发布到Eureka集群中
+### 3.3 将支付服务8001和订单服务80发布到Eureka集群中
 
 ​	（1）修改两个工程的application.yml配置: (只显示被修改的部分)
 
@@ -185,21 +191,23 @@ eureka:
 
 ​	登录 http://eureka7001.com:7001/ 和 http://eureka7002.com:7002/ 都可以看到payment和order两个微服务即为成功。
 
-![image-20200308194246791](..\..\typora-user-images\image-20200308194246791.png)
+![image-20200804215040611](https://gitee.com/liukai830/picgo/raw/master/image-20200804215040611.png)
 
-![image-20200308194341039](..\..\typora-user-images\image-20200308194341039.png)
+![image-20200804215123624](https://gitee.com/liukai830/picgo/raw/master/image-20200804215123624.png)
 
-### 3-4、支付服务提供者8001集群环境构建
+### 3.4 支付服务提供者8001集群环境构建
 
 ​	增加一个同样的module：<font color="red" size="5">`cloud-prodiver-payment8002`</font>，
 
 ​	可以看到在微服务**CLOUD-PAYMENT-SERVICE**下有**8001**和**8002**两个节点，只对外暴露一个微服务名称。
 
-![image-20200308202502006](..\..\typora-user-images\image-20200308202502006.png)
+![image-20200804215712271](https://gitee.com/liukai830/picgo/raw/master/image-20200804215712271.png)
 
-### 3-3、负载均衡
+![image-20200804215731217](https://gitee.com/liukai830/picgo/raw/master/image-20200804215731217.png)
 
-#### 3.3.1 发现问题
+### 3.5 负载均衡
+
+#### 3.5.1 发现问题
 
 ​	**修改consume80 restTemplate远程调用为服务提供者的url地址后，在postman中重新访问80端口下的请求。**
 
@@ -210,14 +218,14 @@ public static final String PAYMENT_URL = "http://CLOUD-PAYMENT-SERVICE";
 
 ​	**发现有报错：**<font color="red">同一个微服务下有多个节点，程序不能通过微服务名知道到底是哪一个微服务进行服务提供</font>
 
-![image-20200308203122056](..\..\typora-user-images\image-20200308203122056.png)
+![image-20200308203122056](https://gitee.com/liukai830/picgo/raw/master/image-20200308203122056.png)
 ​	
 
-#### 3.3.2 解决问题
+#### 3.5.2 解决问题
 
 ​	开启restTemplate的负载均衡功能：
 
-​	修改``cloud-consume-order80``微服务config，<font color="red">增加@LoadBalanced注解，赋予RestTemplate负载均衡的能力</font>
+​	修改``cloud-consume-order80``微服务config，<font color="red">增加`@LoadBalanced`注解，赋予RestTemplate负载均衡的能力</font>
 
 ```java
 @Configuration
@@ -231,16 +239,18 @@ public class ApplicationContextConfig {
 }
 ```
 
-# 四、actuator微服务完善
 
-​	**（1）微服务注册列表中只显示服务名，不显示主机、端口信息：增加application.yml配置**
+
+##  四、actuator微服务完善
+
+​	**（1）微服务注册列表中只显示服务名，不显示主机 端口信息：增加application.yml配置**
 
 ```yaml
 eureka:
   instance:
     instance-id: payment8001
 ```
-![image-20200308205531955](..\..\typora-user-images\image-20200308205531955.png)
+![image-20200308205531955](https://gitee.com/liukai830/picgo/raw/master/image-20200308205531955.png)
 
 ​	**（2）鼠标悬停在微服务上显示IP信息**
 
@@ -249,15 +259,15 @@ eureka:
   instance:
     prefer-ip-address: true
 ```
-![image-20200308210146920](..\..\typora-user-images\image-20200308210146920.png)
+![image-20200308210146920](https://gitee.com/liukai830/picgo/raw/master/image-20200308210146920.png)
 
 
 
-# 五、服务发现Discovery
+## 五、服务发现Discovery
 
 ​	对于注册进eureka里面的微服务，可以通过服务发现来获得该服务的信息。
 
-（1）在主启动类中增加<font color="blue">@EnableDiscoveryClient</font>注解
+（1）在主启动类中增加`@EnableDiscoveryClient`注解
 
 （2）在controller写方法查询已注册的微服务相应信息
 
@@ -277,31 +287,31 @@ public R discovery() {
     // 查询一个微服务下所有实例
     List<ServiceInstance> instances = discoveryClient.getInstances("CLOUD-PAYMENT-SERVICE");
     instances.forEach(
-                serviceInstance ->
-                        log.info(
-                                "serviceId:" + serviceInstance.getServiceId()
-                                + "host: " + serviceInstance.getHost()
-                                + "uri: " + serviceInstance.getUri()
-                        )
-        );
+      serviceInstance ->
+        log.info(
+          "serviceId:" + serviceInstance.getServiceId()
+          + "host: " + serviceInstance.getHost()
+          + "uri: " + serviceInstance.getUri()
+      )
+    );
     return new R(200,"查询微服务信息成功！");
 }
 ```
 ​	查看日志输出：
 
-![image-20200308212700475](..\..\typora-user-images\image-20200308212700475.png)
+![image-20200308212700475](https://gitee.com/liukai830/picgo/raw/master/image-20200308212700475.png)
 
 
 
-# 六、eureka自我保护
+##  六、eureka自我保护
 
-#### 6-1、自我保护理论	
+#### 6.1 自我保护理论
 
 Eureka Server将会尝试删除其服务注册表中的信息，不再删除服务注册表中的数据，也就是不会注销任何微服务。 =>  <font color="blue">某时刻某一个微服务不可用了，Eureka不会立刻清理，依旧会对该微服务的信息进行保存。</font>
 
-​	属于[CAP理论](https://www.jianshu.com/p/a1a67dd70194)中的<font color="blue">AP</font>：[一致性](https://baike.baidu.com/item/一致性/9840083)（Consistency）、[可用性](https://baike.baidu.com/item/可用性/109628)（Availability）、分区容错性（Partition tolerance）
+​	属于[CAP理论](https://www.jianshu.com/p/a1a67dd70194)中的<font color="blue">AP</font>：[一致性](https://baike.baidu.com/item/一致性/9840083)（Consistency） [可用性](https://baike.baidu.com/item/可用性/109628)（Availability） 分区容错性（Partition tolerance）
 
-#### 6-2、关闭自我保护
+#### 6.2 关闭自我保护
 
 ​	服务端：在eureka7001和eureka7002 application.yml增加eureka配置
 
