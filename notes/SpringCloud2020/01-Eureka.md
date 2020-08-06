@@ -309,11 +309,11 @@ public R discovery() {
 
 Eureka Server将会尝试删除其服务注册表中的信息，不再删除服务注册表中的数据，也就是不会注销任何微服务。 =>  <font color="blue">某时刻某一个微服务不可用了，Eureka不会立刻清理，依旧会对该微服务的信息进行保存。</font>
 
-​	属于[CAP理论](https://www.jianshu.com/p/a1a67dd70194)中的<font color="blue">AP</font>：[一致性](https://baike.baidu.com/item/一致性/9840083)（Consistency） [可用性](https://baike.baidu.com/item/可用性/109628)（Availability） 分区容错性（Partition tolerance）
+​	属于[CAP理论](https://www.jianshu.com/p/a1a67dd70194)中的<font color="#42b983">**AP**</font>：[一致性](https://baike.baidu.com/item/一致性/9840083)（Consistency） [可用性](https://baike.baidu.com/item/可用性/109628)（Availability） 分区容错性（Partition tolerance）
 
 #### 6.2 关闭自我保护
 
-​	服务端：在eureka7001和eureka7002 application.yml增加eureka配置
+​	服务端：在`eureka7001`和`eureka7002`的`application.yml`增加 eureka 配置
 
 ```yaml
 eureka:
@@ -324,7 +324,7 @@ eureka:
     eviction-interval-timer-in-ms: 2000
 ```
 
-​	客户端：在payment8001等客户端 application.yml增加eureka配置
+​	客户端：在`payment8001`等客户端 `application.yml`增加 eureka 配置
 
 ```yaml
 eureka:
