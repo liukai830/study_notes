@@ -1,4 +1,4 @@
-## 零、What is Consul
+## What is Consul
 
 ​	Consul是一套开源的分布式服务发现和配置管理系统，由HashoCorp公司用Go语言开发。提供了微服务系统中的服务治理、配置中心、控制总线等功能
 
