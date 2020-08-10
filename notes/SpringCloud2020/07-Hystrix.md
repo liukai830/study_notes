@@ -614,7 +614,7 @@ public Observable<R> observe() {
  </dependency>
 ```
 
-####application.yml
+#### application.yml
 
 ```yaml
 server:

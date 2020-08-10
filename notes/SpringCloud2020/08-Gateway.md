@@ -61,12 +61,15 @@ Web请求，通过一些匹配条件，定位到真正的服务节点。并在�
 ## 三、Gateway工作流程
 
 <center class="half">
-<img src="https://gitee.com/liukai830/picgo/raw/master/无标题.png" width="500"/>
-    <img src="https://gitee.com/liukai830/picgo/raw/master/12191355-28ebd217899aa37e.png" width="500"/>
+<img src="https://gitee.com/liukai830/picgo/raw/master/无标题.png" width="350"/>
+<img src="https://gitee.com/liukai830/picgo/raw/master/12191355-28ebd217899aa37e.png" width="400"/>
 </class>
+
+
 ​	客户端向Spring Cloud Gateway 发出请求，然后在Gateway Handler Mapping中找到与请求相匹配的路由，将其发送到Gateway Web Handler。
 ​	Handler再通过指定的过滤连将请求大宋我实际的服务执行业务，然后返回。过滤器质检用虚线分开是因为过滤器可能会在发送代理请求之前("pre")或之后("post")执行业务逻辑。
 ​	Filter在"pre"类型的过滤器可以做参数校验、权限校验、流量监控、日志输出、协议转换等；在"post"类型的过滤器中可以做响应内容、响应头的修改、日志的输出、流量监控等有着非常重要的作用。
+
 
 
 
