@@ -67,28 +67,379 @@
 
 
 
-
 ## 四、入门配置
+
+### 1. 创建cloud-gateway-gateway9527
+
+#### pom
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-gateway</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>com.liuk.springcloud</groupId>
+        <artifactId>cloud-api-commons</artifactId>
+        <version>${project.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-netflix-hystrix</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-devtools</artifactId>
+        <scope>runtime</scope>
+        <optional>true</optional>
+    </dependency>
+    <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <optional>true</optional>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-test</artifactId>
+        <scope>test</scope>
+    </dependency>
+    </dependencies>
+```
+
+
+
+#### application.yml
+
+```yaml
+server:
+  port: 9527
+spring:
+  application:
+    name: cloud-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: payment_routh #路由的ID，没有固定规则但要求唯一，建议配合服务名
+          uri: http://localhost:8001   #匹配后提供服务的路由地址
+          predicates:
+            - Path=/payment/get/**   #断言,路径相匹配的进行路由
+        - id: payment_routh2
+          uri: http://localhost:8001
+          predicates:
+            - Path=/payment/lb/**   #断言,路径相匹配的进行路由
+eureka:
+  instance:
+    hostname: cloud-gateway-service
+  client:
+    service-url:
+      register-with-eureka: true
+      fetch-registry: true
+      defaultZone: http://eureka7001.com:7001/eureka
+```
+
+#### 测试
+
+加入网关前：http://localhost:8001/payment/get/1
+
+加入网关后：http://localhost:9527/payment/get/1
+
+<center class="half">
+<img src="https://gitee.com/liukai830/picgo/raw/master/image-20200812201803597.png"/>
+<img src="https://gitee.com/liukai830/picgo/raw/master/image-20200812201844552.png"/>
+</class>
+
+
+
+### 2. 路由配置的两种方式
+
+#### （1）application.yml
+
+```yaml
+spring:
+  application:
+    name: cloud-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: payment_routh #路由的ID，没有固定规则但要求唯一，建议配合服务名
+          uri: http://localhost:8001   #匹配后提供服务的路由地址
+          predicates:
+            - Path=/payment/get/**   #断言,路径相匹配的进行路由
+        - id: payment_routh2
+          uri: http://localhost:8001
+          predicates:
+            - Path=/payment/lb/**   #断言,路径相匹配的进行路由
+```
+
+
+
+#### （2）硬编码
+
+```java
+@Configuration
+public class GatewayConfig {
+    @Bean
+    public RouteLocator customRouteLocator(RouteLocatorBuilder routeLocatorBuilder) {
+        return  routeLocatorBuilder.routes()
+                .route("my_route_a", r -> r.path("/guonei").uri("http://news.baidu.com/guonei"))
+                .route("my_route_a", r -> r.path("/guoji").uri("http://news.baidu.com/guoji")).build();
+    }
+}
+```
+
+
 
 
 
 ## 五、通过微服务名实现动态路由
 
+​	默认情况下Gateway会根据注册中心的服务列表，以注册中心上微服务名为路径创建动态路由进行转发，从而实现动态路由的功能。
 
-
-
+```yaml
+spring:
+  application:
+    name: cloud-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true # 开启从注册中心动态创建路由功能，利用微服务名进行路由
+      routes:
+        - id: payment_routh
+          uri: lb://cloud-payment-service
+          predicates:
+            - Path=/payment/get/**
+        - id: payment_routh
+          uri: lb://cloud-payment-service
+          predicates:
+            - Path=/payment/lb/**
+```
 
 
 
 ## 六、Predicate的使用
 
+![12191355-7c74ff861a209cd9](https://gitee.com/liukai830/picgo/raw/master/12191355-7c74ff861a209cd9.png)
 
 
 
+>  Route predicate Factories 路由谓词工厂
 
+#### 1. After Route Predicate Factory
 
+​	此谓词匹配当前日期时间之后发生的请求。
+
+```yaml
+spring:
+  cloud:
+    gateway:
+      routes:
+      - id: after_route
+        uri: lb://cloud-payment-service
+        predicates:
+        - After=2017-01-20T17:42:47.789-07:00[America/Denver]
+```
+
+#### 2. Before Route Predicate Factory
+
+​	此谓词匹配在当前日期时间之前发生的请求。
+
+```yaml
+spring:
+  cloud:
+    gateway:
+      routes:
+      - id: before_route
+        uri: lb://cloud-payment-service
+        predicates:
+        - Before=2017-01-20T17:42:47.789-07:00[America/Denver]
+```
+
+#### 3. Between Route Predicate Factory
+
+​	此谓词匹配datetime1之后和datetime2之前发生的请求。 datetime2参数必须在datetime1之后。
+
+```yaml
+spring:
+  cloud:
+    gateway:
+      routes:
+      - id: between_route
+        uri: lb://cloud-payment-service
+        predicates:
+        - Between=2017-01-20T17:42:47.789-07:00[America/Denver], 2017-01-21T17:42:47.789-07:00[America/Denver]
+```
+
+#### 4. Cookie Route Predicate Factory
+
+​	Cookie Route Predicate Factory有两个参数，cookie名称和正则表达式。此谓词匹配具有给定名称且值与正则表达式匹配的cookie。
+
+```yaml
+spring:
+  cloud:
+    gateway:
+      routes:
+      - id: cookie_route
+        uri: lb://cloud-payment-service
+        predicates:
+        - Cookie=chocolate, ch.p
+```
+
+#### 5. Header Route Predicate Factory
+
+​	Header Route Predicate Factory有两个参数，标题名称和正则表达式。此谓词与具有给定名称且值与正则表达式匹配的标头匹配。
+
+```yaml
+spring:
+  cloud:
+    gateway:
+      routes:
+      - id: header_route
+        uri: lb://cloud-payment-service
+        predicates:
+        - Header=X-Request-Id, \d+
+```
+
+#### 6. Host Route Predicate Factory
+
+​	Host Route Predicate Factory采用一个参数：主机名模式。该模式是一种Ant样式模式“.”作为分隔符。此谓词匹配与模式匹配的Host标头。
+
+```yaml
+spring:
+  cloud:
+    gateway:
+      routes:
+      - id: host_route
+        uri: lb://cloud-payment-service
+        predicates:
+        - Host=**.somehost.org
+```
+
+#### 7. Method Route Predicate Factory
+
+​	Method Route Predicate Factory采用一个参数：要匹配的HTTP方法。
+
+```yaml
+spring:
+  cloud:
+    gateway:
+      routes:
+      - id: method_route
+        uri: lb://cloud-payment-service
+        predicates:
+        - Method=GET
+```
+
+#### 8. Path Route Predicate Factory
+
+```yaml
+spring:
+  cloud:
+    gateway:
+      routes:
+      - id: host_route
+        uri: lb://cloud-payment-service
+        predicates:
+        - Path=/foo/{segment}
+```
+
+#### 9. Query Route Predicate Factory
+
+​	Query Route Predicate Factory有两个参数：一个必需的参数和一个可选的正则表达式。
+
+```yaml
+spring:
+  cloud:
+    gateway:
+      routes:
+      - id: query_route
+        uri: lb://cloud-payment-service
+        predicates:
+        - Query=baz		# 如果请求包含baz查询参数，则此路由将匹配。
+```
+
+```yaml
+spring:
+  cloud:
+    gateway:
+      routes:
+      - id: query_route
+        uri: lb://cloud-payment-service
+        predicates:
+        - Query=foo, ba.	# 如果请求包含其值与ba匹配的foo查询参数，则此路由将匹配。 regexp，所以bar和baz匹配。
+```
+
+#### 10. RemoteAddr Route Predicate Factory
+
+​	RemoteAddr Route Predicate Factory采用CIDR符号（IPv4或IPv6）字符串的列表（最小值为1），例如， 192.168.0.1/16（其中192.168.0.1是IP地址，16是子网掩码）。
+
+```yaml
+spring:
+  cloud:
+    gateway:
+      routes:
+      - id: remoteaddr_route
+        uri: lb://cloud-payment-service
+        predicates:
+        - RemoteAddr=192.168.1.1/24
+```
 
 
 
 ## 七、Filter的使用
+
+> 路由过滤器可用于修改进入的HTTP请求和返回的HTTP响应，路由过滤器只能指定路由进行使用
+> Spring Cloud Gateway 内置了多种路由过滤器，他们都有GatewayFilter的工厂类来产生
+
+- Filter生命周期
+  - pre：在业务逻辑之前
+  - post：在业务逻辑之后
+- 种类
+  - GatewayFilter：单一
+  - GlobalFilter：全局
+
+
+
+### 自定义全局GlobalFilter
+
+​	只要实现`GlobalFilter`和`Ordered`接口即可；自定义过滤器可以用于`全局日志记录`、`统一网关鉴权`、……
+
+```java
+@Component
+@Slf4j
+public class MyLogGateWayFilter implements GlobalFilter, Ordered {
+    @Override
+    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        log.info("*********come in MyLogGateWayFilter: " + LocalDateTime.now());
+        String uname = exchange.getRequest().getQueryParams().getFirst("username");
+        if(StringUtils.isBlank(uname)) {
+            log.info("*****用户名为Null 非法用户");
+            exchange.getResponse().setStatusCode(HttpStatus.NOT_ACCEPTABLE);
+            return exchange.getResponse().setComplete();
+        }
+        return chain.filter(exchange);
+    }
+  
+    /* 过滤器优先级，数字越小优先级越高 */
+    @Override
+    public int getOrder() {
+        return 0;
+    }
+}
+```
+
+
+
+
+
+
+
+
+
+
 
