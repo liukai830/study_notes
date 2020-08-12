@@ -53,9 +53,10 @@
 ## 三、Gateway工作流程
 
 <center class="half">
-<img src="https://gitee.com/liukai830/picgo/raw/master/无标题.png" width="350"/>
-<img src="https://gitee.com/liukai830/picgo/raw/master/12191355-28ebd217899aa37e.png" width="400"/>
+<img src="https://gitee.com/liukai830/picgo/raw/master/无标题.png" width="450"/>
+<img src="https://gitee.com/liukai830/picgo/raw/master/12191355-28ebd217899aa37e.png" width="550"/>
 </class>
+
 
 
 ​	客户端向Spring Cloud Gateway 发出请求，然后在Gateway Handler Mapping中找到与请求相匹配的路由，将其发送到Gateway Web Handler。
