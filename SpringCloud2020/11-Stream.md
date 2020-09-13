@@ -371,7 +371,8 @@ spring:
 自定义消息发送通道 `MySource.java`
 
 ```java
-package com.liuk.cloud.mychannel;
+package com.liuk.cloud.produce;
+
 import org.springframework.cloud.stream.annotation.Output;
 import org.springframework.messaging.MessageChannel;
 /**
@@ -379,6 +380,7 @@ import org.springframework.messaging.MessageChannel;
  */
 public interface MySource {
     String MY_OUTPUT = "my_output";
+
     @Output(MY_OUTPUT)
     MessageChannel myOutput();
 }
@@ -387,16 +389,16 @@ public interface MySource {
 自定义消息接收通道 `MySink.java`
 
 ```java
-package com.liuk.cloud.cmyhannel;
+package com.liuk.cloud.consumer;
 
 import org.springframework.cloud.stream.annotation.Input;
 import org.springframework.messaging.SubscribableChannel;
-
 /**
  * 自定义消息接收通道
  */
 public interface MySink {
     String MY_INPUT = "my_input";
+
     @Input(MY_INPUT)
     SubscribableChannel myInput();
 }
@@ -410,14 +412,14 @@ public interface MySink {
 
 ```yaml
 server:
-  port: 8801 # 端口
+  port: 8801
 
 spring:
   application:
-    name: stream-producer # 应用名称
+    name: cloud-stream-provider
   cloud:
     stream:
-    	binders: # 在此处配置要绑定的rabbitmq的服务信息；
+      binders: # 在此处配置要绑定的rabbitmq的服务信息；
         defaultRabbit: # 表示定义的名称，用于于binding整合
           type: rabbit # 消息组件类型
           environment: # 设置rabbitmq的相关的环境配置
@@ -427,27 +429,38 @@ spring:
                 port: 5672
                 username: guest
                 password: guest
-      bindings:
-        # 消息发送通道
-        # 与 org.springframework.cloud.stream.messaging.Source 中的 @Output("output") 注解的 value 相同
-        output:
-          destination: stream.message # 绑定的交换机名称
-        my_output:
-          destination: my.message # 绑定的交换机名称
+      bindings: # 服务的整合处理
+        output: # 这个名字是一个通道的名称
+          destination: studyExchange # 表示要使用的Exchange名称定义
+          content-type: application/json # 设置消息类型，本次为json，文本则设置“text/plain”
+          binder: defaultRabbit # 设置要绑定的消息服务的具体设置
+        my_output: # 这个名字是一个通道的名称
+          destination: liukMessage # 表示要使用的Exchange名称定义
+          content-type: application/json # 设置消息类型，本次为json，文本则设置“text/plain”
+          binder: defaultRabbit # 设置要绑定的消息服务的具体设置
+eureka:
+  client: # 客户端进行Eureka注册的配置
+    service-url:
+      defaultZone: http://localhost:7001/eureka
+  instance:
+    lease-renewal-interval-in-seconds: 2 # 设置心跳的时间间隔（默认是30秒）
+    lease-expiration-duration-in-seconds: 5 # 如果现在超过了5秒的间隔（默认是90秒）
+    instance-id: send-8801.com  # 在信息列表时显示主机名称
+    prefer-ip-address: true     # 访问的路径变为IP地址
 ```
 
 消息消费者。
 
 ```yaml
 server:
-  port: 8802 # 端口
+  port: 8802
 
 spring:
   application:
-    name: stream-consumer # 应用名称
+    name: cloud-stream-consumer
   cloud:
     stream:
-    	binders: # 在此处配置要绑定的rabbitmq的服务信息；
+      binders: # 在此处配置要绑定的rabbitmq的服务信息；
         defaultRabbit: # 表示定义的名称，用于于binding整合
           type: rabbit # 消息组件类型
           environment: # 设置rabbitmq的相关的环境配置
@@ -457,13 +470,25 @@ spring:
                 port: 5672
                 username: guest
                 password: guest
-      bindings:
-        # 消息接收通道
-        # 与 org.springframework.cloud.stream.messaging.Sink 中的 @Input("input") 注解的 value 相同
-        input:
-          destination: stream.message # 绑定的交换机名称
-        my_input:
-          destination: my.message # 绑定的交换机名称
+      bindings: # 服务的整合处理
+        input: # 这个名字是一个通道的名称
+          destination: studyExchange # 表示要使用的Exchange名称定义
+          content-type: application/json # 设置消息类型，本次为json，文本则设置“text/plain”
+          binder: defaultRabbit # 设置要绑定的消息服务的具体设置
+          group: groupA
+        my_input: # 这个名字是一个通道的名称
+          destination: liukMessage # 表示要使用的Exchange名称定义
+          content-type: application/json # 设置消息类型，本次为json，文本则设置“text/plain”
+          binder: defaultRabbit # 设置要绑定的消息服务的具体设置
+eureka:
+  client: # 客户端进行Eureka注册的配置
+    service-url:
+      defaultZone: http://localhost:7001/eureka
+  instance:
+    lease-renewal-interval-in-seconds: 2 # 设置心跳的时间间隔（默认是30秒）
+    lease-expiration-duration-in-seconds: 5 # 如果现在超过了5秒的间隔（默认是90秒）
+    instance-id: send-8802.com  # 在信息列表时显示主机名称
+    prefer-ip-address: true     # 访问的路径变为IP地址
 ```
 
 
@@ -473,25 +498,28 @@ spring:
 消息生产者 `MyMessageProducer.java`。
 
 ```java
-package com.liuk.cloud.producer;
+package com.liuk.cloud.service.impl;
 
-import com.com.liuk.cloud.mychannel.MySource;
+import com.liuk.cloud.produce.MySource;
+import com.liuk.cloud.service.MyMessageProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.stereotype.Component;
-/**
- * 消息生产者
- */
-@Component
+
+import java.util.UUID;
+
 @EnableBinding(MySource.class)
-public class MyMessageProducer {
-    @Autowired private MySource mySource;
-    /**
-     * 发送消息
-     */
-    public void send(String message) {
-        mySource.myOutput().send(MessageBuilder.withPayload(message).build());
+public class MyMessageProviderImpl implements MyMessageProvider {
+
+    @Autowired
+    private MySource mySource;
+
+    @Override
+    public String send() {
+        String message = "MY-" + UUID.randomUUID().toString();
+        boolean sendFlag = mySource.myOutput().send(MessageBuilder.withPayload(message).build());
+        System.out.println("message:" + message);
+        return message;
     }
 }
 ```
@@ -499,25 +527,24 @@ public class MyMessageProducer {
 消息消费者 `MyMessageConsumer.java`。
 
 ```java
-package com.liuk.cloud.consumer;
+package com.liuk.cloud.controller;
 
-import com.liuk.cloud.mychannel.MySink;
+import com.liuk.cloud.consumer.MySink;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.cloud.stream.annotation.StreamListener;
+import org.springframework.messaging.Message;
 import org.springframework.stereotype.Component;
 
-/**
- * 消息消费者
- */
 @Component
 @EnableBinding(MySink.class)
-public class MyMessageConsumer {
-    /**
-     * 接收消息
-     */
+public class MyReceiveMessageLinstnerController {
+    @Value("${server.port}")
+    private String port;
+
     @StreamListener(MySink.MY_INPUT)
-    public void receive(String message) {
-        System.out.println("message = " + message);
+    public void input(Message<String> message) {
+        System.out.println("接收到消息 -----> " + port + ": " + message.getPayload());
     }
 }
 ```
@@ -526,38 +553,25 @@ public class MyMessageConsumer {
 
 #### 6.4 测试
 
-##### 单元测试MessageProducerTest.java
+![image-20200913203047945](https://gitee.com/liukai830/picgo/raw/master/image-20200913203047945.png)
 
-```java
-package com.liuk.cloud;
-
-import com.liuk.cloud.producer.MyMessageProducer;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-
-@SpringBootTest(classes = {StreamProducerApplication.class})
-public class MessageProducerTest {
-
-    @Autowired private MyMessageProducer myMessageProducer;
-    @Test
-    public void testMySend() {
-        myMessageProducer.send("hello spring cloud stream");
-    }
-}
-```
-
-
+![image-20200913203115439](https://gitee.com/liukai830/picgo/raw/master/image-20200913203115439.png)
 
 ##### 访问
 
 启动消息消费者，运行单元测试，消息消费者控制台打印结果如下：
 
-`message = hello spring cloud stream`
+```
+接收到消息 -----> 8802: MY-4ec548ed-0e2a-4f62-8190-30d03e6a1623
+接收到消息 -----> 8802: MY-7dd5a7f9-960f-416e-a801-4bad76d5828d
+接收到消息 -----> 8802: MY-01090803-0342-4246-acac-0d65dc423952
+接收到消息 -----> 8802: MY-59b97e07-9b6b-4b0a-82a7-ce651fd412e7
+接收到消息 -----> 8802: MY-692b3506-a679-4193-9900-a32a7f812655
+```
 
 RabbitMQ 界面如下：
 
-![myrule](https://gitee.com/liukai830/picgo/raw/master/myrule.png)
+![image-20200913203248767](https://gitee.com/liukai830/picgo/raw/master/image-20200913203248767.png)
 
 
 
@@ -578,7 +592,7 @@ RabbitMQ 界面如下：
 　　自定义消息发送通道 `MySource02.java`
 
 ```java
-package com.liuk.cloud.mychannel;
+package com.liuk.cloud.produce;
 
 import org.springframework.cloud.stream.annotation.Output;
 import org.springframework.messaging.MessageChannel;
@@ -597,7 +611,7 @@ public interface MySource02 {
 　　自定义消息接收通道 `MySink02.java`
 
 ```java
-package com.liuk.cloud.channel;
+package com.liuk.cloud.consumer;
 
 import org.springframework.cloud.stream.annotation.Input;
 import org.springframework.messaging.SubscribableChannel;
@@ -655,28 +669,28 @@ spring:
 ​		消息生产者 `MyMessageProducer02.java`。
 
 ```java
-package com.liuk.cloud.producer;
+package com.liuk.cloud.service.impl;
 
-import com.liuk.cloud.mychannel.MySource02;
+import com.liuk.cloud.produce.MySource;
+import com.liuk.cloud.produce.MySource02;
+import com.liuk.cloud.service.MyMessageProvider02;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.stereotype.Component;
 
-/**
- * 消息生产者
- */
-@Component
+import java.util.UUID;
+
 @EnableBinding(MySource02.class)
-public class MyMessageProducer02 {
-
+public class MyMessageProviderImpl02 implements MyMessageProvider02 {
     @Autowired
     private MySource02 mySource02;
-    /**
-     * 发送消息
-     */
-    public void send(String message) {
-        mySource02.myOutput().send(MessageBuilder.withPayload(message).build());
+
+    @Override
+    public String send() {
+        String message = "MY02-" + UUID.randomUUID().toString();
+        boolean sendFlag = mySource02.myOutput().send(MessageBuilder.withPayload(message).build());
+        System.out.println("message:" + message);
+        return message;
     }
 }
 ```
@@ -715,38 +729,27 @@ public class MyMessageConsumer02 {
 
 #### 7.4 测试
 
-##### 单元测试MessageProducerTest.java
+![image-20200913204139275](https://gitee.com/liukai830/picgo/raw/master/image-20200913204139275.png)
 
-```java
-package com.liuk.cloud;
-
-import com.liuk.cloud.producer.MyMessageProducer02;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-
-@SpringBootTest(classes = {StreamProducerApplication.class})
-public class MessageProducerTest {
-    @Autowired
-    private MyMessageProducer02 myMessageProducer02;
-    @Test
-    public void testMySend02() {
-        myMessageProducer02.send("约定大于配置");
-    }
-}
-```
+![image-20200913204225757](https://gitee.com/liukai830/picgo/raw/master/image-20200913204225757.png)
 
 
 
 ##### 访问
 
-启动消息消费者，运行单元测试，消息消费者控制台打印结果如下：
+启动消息消费者，运行测试，消息消费者控制台打印结果如下：
 
-`message = 约定大于配置`
+```
+接收到消息 -----> 8802: MY02-84f7726d-45e8-4150-be96-3fa9ca542261
+接收到消息 -----> 8802: MY02-752d754f-5775-4d1a-9d80-9e7d68dcc31f
+接收到消息 -----> 8802: MY02-e4915c72-7f75-4bc6-9b2d-c50927417e32
+接收到消息 -----> 8802: MY02-3c5beb22-ebb4-4548-82d4-164a4d32ab0b
+接收到消息 -----> 8802: MY02-558179c8-931d-430b-8672-e9b7eebc446d
+```
 
 RabbitMQ 界面如下：
 
-![171c8b7985013f14](https://gitee.com/liukai830/picgo/raw/master/171c8b7985013f14.png)
+![image-20200913204318721](https://gitee.com/liukai830/picgo/raw/master/image-20200913204318721.png)
 
 
 
@@ -765,8 +768,6 @@ RabbitMQ 界面如下：
 #### 8.1 创建消息通道
 
 　　发送原始消息，接收处理后的消息并发送短信和邮件的消息驱动微服务应用。
-
-
 
 ```java
 package com.liuk.cloud.mychannel;
@@ -862,45 +863,32 @@ spring:
 
 
 
-#### 8.3 消息驱动微服务A
+#### 8.3 消息驱动微服务A(8801)
 
 ##### 发送消息
 
 发送原始消息 `10086|10086@email.com` 至 `source.message` 交换机。
 
 ```java
-package com.liuk.cloud.producer;
+package com.liuk.cloud.service.impl;
 
-import com.liuk.cloud.mychannel.MyProcessor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.liuk.cloud.produce.MyProcessor;
+import com.liuk.cloud.service.SourceMessageProducer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.annotation.EnableBinding;
-import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.stereotype.Component;
+import org.springframework.integration.support.MessageBuilder;
 
-/**
- * 消息生产者
- */
-@Component
+
 @EnableBinding(MyProcessor.class)
-public class SourceMessageProducer {
-
-    private Logger logger = LoggerFactory.getLogger(SourceMessageProducer.class);
-
+public class SourceMessageProducerImpl implements SourceMessageProducer {
     @Autowired
     private MyProcessor myProcessor;
 
-    /**
-     * 发送原始消息
-     *
-     * @param sourceMessage
-     */
+    @Override
     public void send(String sourceMessage) {
-        logger.info("原始消息发送成功，原始消息为：{}", sourceMessage);
         myProcessor.sourceOutput().send(MessageBuilder.withPayload(sourceMessage).build());
+        System.out.println("原始消息发送成功，原始消息为：" + sourceMessage);
     }
-
 }
 ```
 
@@ -911,24 +899,15 @@ public class SourceMessageProducer {
 接收处理后的消息并发送短信和邮件。
 
 ```java
-package com.liuk.cloud.consumer;
+package com.liuk.cloud.controller;
 
-import com.liuk.cloud.mychannel.MyProcessor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import com.liuk.cloud.produce.MyProcessor;
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.cloud.stream.annotation.StreamListener;
-import org.springframework.stereotype.Component;
 
-/**
- * 消息消费者
- */
-@Component
 @EnableBinding(MyProcessor.class)
 public class SmsAndEmailMessageConsumer {
-
-    private Logger logger = LoggerFactory.getLogger(SmsAndEmailMessageConsumer.class);
-
     /**
      * 接收消息 电话号码
      *
@@ -936,7 +915,7 @@ public class SmsAndEmailMessageConsumer {
      */
     @StreamListener(MyProcessor.SMS_MESSAGE)
     public void receiveSms(String phoneNum) {
-        logger.info("电话号码为：{}，调用短信发送服务，发送短信...", phoneNum);
+        System.out.println("电话号码为：" +  phoneNum + "，调用短信发送服务，发送短信...");
     }
 
     /**
@@ -946,9 +925,8 @@ public class SmsAndEmailMessageConsumer {
      */
     @StreamListener(MyProcessor.EMAIL_MESSAGE)
     public void receiveEmail(String emailAddress) {
-        logger.info("邮箱地址为：{}，调用邮件发送服务，发送邮件...", emailAddress);
+        System.out.println("邮箱地址为：" + emailAddress + "，调用邮件发送服务，发送邮件...");
     }
-
 }
 ```
 
@@ -956,33 +934,23 @@ public class SmsAndEmailMessageConsumer {
 
 
 
-#### 8.4 消息驱动微服务B
+#### 8.4 消息驱动微服务B(8802)
 
 ##### 接收消息
 
 接收原始消息 `10086|10086@email.com` 处理后并发送至 `sms.message` 和 `email.message` 交换机。
 
 ```java
-package com.liuk.cloud.consumer;
+package com.liuk.cloud.controller;
 
-import com.liuk.cloud.mychannel.MyProcessor;
-import com.liuk.cloud.producer.SmsAndEmailMessageProducer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.liuk.cloud.consumer.MyProcessor;
+import com.liuk.cloud.service.SmsAndEmailMessageProducer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.cloud.stream.annotation.StreamListener;
-import org.springframework.stereotype.Component;
 
-/**
- * 消息消费者
- */
-@Component
 @EnableBinding(MyProcessor.class)
 public class SourceMessageConsumer {
-
-    private Logger logger = LoggerFactory.getLogger(SourceMessageConsumer.class);
-
     @Autowired
     private SmsAndEmailMessageProducer smsAndEmailMessageProducer;
 
@@ -993,13 +961,12 @@ public class SourceMessageConsumer {
      */
     @StreamListener(MyProcessor.SOURCE_MESSAGE)
     public void receive(String sourceMessage) {
-        logger.info("原始消息接收成功，原始消息为：{}", sourceMessage);
+        System.out.println("原始消息接收成功，原始消息为：" + sourceMessage);
         // 发送消息 电话号码
         smsAndEmailMessageProducer.sendSms(sourceMessage.split("\\|")[0]);
         // 发送消息 邮箱地址
         smsAndEmailMessageProducer.sendEmail(sourceMessage.split("\\|")[1]);
     }
-
 }
 ```
 
@@ -1010,48 +977,30 @@ public class SourceMessageConsumer {
 发送电话号码 `10086` 和邮箱地址 `10086@email.com` 至 `sms.message` 和 `email.message` 交换机。
 
 ```java
-package com.liuk.cloud.producer;
+package com.liuk.cloud.service.impl;
 
-import com.liuk.cloud.mychannel.MyProcessor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.liuk.cloud.consumer.MyProcessor;
+import com.liuk.cloud.service.SmsAndEmailMessageProducer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.stereotype.Component;
 
-/**
- * 消息生产者
- */
-@Component
 @EnableBinding(MyProcessor.class)
-public class SmsAndEmailMessageProducer {
-
-    private Logger logger = LoggerFactory.getLogger(SmsAndEmailMessageProducer.class);
-
+public class SmsAndEmailMessageProducerImpl implements SmsAndEmailMessageProducer {
     @Autowired
     private MyProcessor myProcessor;
 
-    /**
-     * 发送消息 电话号码
-     *
-     * @param smsMessage
-     */
+    @Override
     public void sendSms(String smsMessage) {
-        logger.info("电话号码消息发送成功，消息为：{}", smsMessage);
         myProcessor.smsOutput().send(MessageBuilder.withPayload(smsMessage).build());
+        System.out.println("电话号码消息发送成功，消息为：" + smsMessage);
     }
 
-    /**
-     * 发送消息 邮箱地址
-     *
-     * @param emailMessage
-     */
+    @Override
     public void sendEmail(String emailMessage) {
-        logger.info("邮箱地址消息发送成功，消息为：{}", emailMessage);
         myProcessor.emailOutput().send(MessageBuilder.withPayload(emailMessage).build());
+        System.out.println("邮箱地址消息发送成功，消息为：" + emailMessage);
     }
-
 }
 ```
 
@@ -1059,27 +1008,11 @@ public class SmsAndEmailMessageProducer {
 
 #### 8.5 测试
 
-##### 单元测试MessageProducerTest.java
-
 ```java
-package com.liuk.cloud;
-
-import com.liuk.cloud.producer.SourceMessageProducer;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-
-@SpringBootTest(classes = {StreamProducerApplication.class})
-public class MessageProducerTest {
-
-    @Autowired
-    private SourceMessageProducer sourceMessageProducer;
-
-    @Test
-    public void testSendSource() {
-        sourceMessageProducer.send("10086|10086@email.com");
-    }
-
+@GetMapping("/send4")
+public String send4() {
+    sourceMessageProducer.send("10086|10086@email.com");
+    return "发送成功！" + UUID.randomUUID().toString();
 }
 ```
 
@@ -1090,6 +1023,7 @@ public class MessageProducerTest {
 消息驱动微服务 A 控制台打印结果如下：
 
 ```
+原始消息发送成功，原始消息为：10086|10086@email.com
 电话号码为：10086，调用短信发送服务，发送短信...
 邮箱地址为：10086@email.com，调用邮件发送服务，发送邮件...
 ```
@@ -1101,8 +1035,13 @@ public class MessageProducerTest {
 电话号码消息发送成功，消息为：10086
 邮箱地址消息发送成功，消息为：10086@email.com
 ```
+![image-20200913210923777](https://gitee.com/liukai830/picgo/raw/master/image-20200913210923777.png)
+
+![image-20200913210946491](https://gitee.com/liukai830/picgo/raw/master/image-20200913210946491.png)
+
+
 
 RabbitMQ 界面如下：
 
-![171c8b79e512601f](https://gitee.com/liukai830/picgo/raw/master/171c8b79e512601f.png)
+![image-20200913211209291](https://gitee.com/liukai830/picgo/raw/master/image-20200913211209291.png)
 
